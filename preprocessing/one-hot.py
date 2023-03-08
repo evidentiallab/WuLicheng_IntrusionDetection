@@ -96,7 +96,7 @@ def one_hot(df):
 
 
 if __name__ == '__main__':
-    df = pd.read_csv('../dataset/KDDCUP99/processed/kddcup.data_10_percent_corrected.csv')
+    df = pd.read_csv('')
     print(df)
     df = one_hot(df)
     # print(df)
