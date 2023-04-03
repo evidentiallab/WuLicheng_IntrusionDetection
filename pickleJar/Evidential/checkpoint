@@ -1,2 +1,2 @@
-model_checkpoint_path: "EVI_FitNet_lr0.001_bs64"
-all_model_checkpoint_paths: "EVI_FitNet_lr0.001_bs64"
+model_checkpoint_path: "EVI_FitNet_0.001and64_500proto"
+all_model_checkpoint_paths: "EVI_FitNet_0.001and64_500proto"
