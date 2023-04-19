@@ -22,6 +22,7 @@ def basicPCA(n, data):
     # print(type(pca.explained_variance_ratio_))
     s = pca.explained_variance_ratio_
     print('cumulativeVarRate = ' + str(s.sum()))
+    
     return s
 
 

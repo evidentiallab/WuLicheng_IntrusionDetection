@@ -15,7 +15,7 @@ def train_AE_123_100(train,test, is_train, is_polt):
     # 定义自编码器模型
     input_data = Input(shape=(123,))
     hidden_layer = Dense(100, activation=tf.keras.layers.LeakyReLU(alpha=0.01))(input_data)
-    output_data = Dense(123, activation=tf.keras.layers.LeakyReLU(alpha=0.01) )(hidden_layer)
+    output_data = Dense(123, activation=tf.keras.layers.LeakyReLU(alpha=0.01))(hidden_layer)
     autoencoder = Model(inputs=input_data, outputs=output_data)
     encoder = Model(inputs=input_data, outputs=hidden_layer)
     # autoencoder.summary()
@@ -153,9 +153,9 @@ if __name__ == '__main__':
     df2 = pd.read_csv('../dataset/KDDCUP99/concatenated/test-MinMax.csv',header=None)
     test = df2.values
     # 训练or加载AE
-    # train_AE_123_100(train,test,is_train=0,is_polt=1)
+    # train_AE_135_100(train,test,is_train=0,is_polt=1)
     # train_AE_123_100_81(train, test, is_train=0, is_polt=1)
-    train_AE_123_100_64(train, test, is_train=1, is_polt=1)
+    train_AE_123_100_64(train, test, is_train=0, is_polt=1)
 
 
 
