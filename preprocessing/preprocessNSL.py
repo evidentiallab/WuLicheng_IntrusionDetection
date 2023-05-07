@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
 
-train_filepath = 'D:/IDdataset/processedNSL/train(onehot).csv'
-test_filepath = 'D:/IDdataset/processedNSL/test(onehot).csv'
+train_filepath = 'D:/IDdataset/NSL-KDD/KDDTrain+.txt'
+test_filepath = 'D:/IDdataset/NSL-KDD/KDDTest+.txt'
 destination_filepath = 'D:/IDdataset/processedNSL/concatenated.csv'
 
 column_list = ['duration','protocol_type','service','flag','src_bytes',
@@ -17,41 +17,41 @@ column_list = ['duration','protocol_type','service','flag','src_bytes',
 
 
 def one_hot(df):
-    protocol_type_one_hot = pd.get_dummies(df["protocol_type"], prefix="protocol_type")
-    df = df.drop("protocol_type", axis=1)
-    df = df.join(protocol_type_one_hot)
-
-    service_one_hot = pd.get_dummies(df["service"], prefix="service")
-    df = df.drop("service", axis=1)
-    df = df.join(service_one_hot)
-
-    flag_one_hot = pd.get_dummies(df["flag"], prefix="flag")
-    df = df.drop("flag", axis=1)
-    df = df.join(flag_one_hot)
-
-    land_one_hot = pd.get_dummies(df["land"], prefix="land")
-    df = df.drop("land", axis=1)
-    df = df.join(land_one_hot)
-
-    logged_in_one_hot = pd.get_dummies(df["logged_in"], prefix="logged_in")
-    df = df.drop("logged_in", axis=1)
-    df = df.join(logged_in_one_hot)
-
-    root_shell_one_hot = pd.get_dummies(df["root_shell"], prefix="root_shell")
-    df = df.drop("root_shell", axis=1)
-    df = df.join(root_shell_one_hot)
-
-    su_attempted_one_hot = pd.get_dummies(df["su_attempted"], prefix="su_attempted")
-    df = df.drop("su_attempted", axis=1)
-    df = df.join(su_attempted_one_hot)
-
-    is_host_login_one_hot = pd.get_dummies(df["is_host_login"], prefix="is_host_login")
-    df = df.drop("is_host_login", axis=1)
-    df = df.join(is_host_login_one_hot)
-
-    is_guest_login_one_hot = pd.get_dummies(df["is_guest_login"], prefix="is_guest_login")
-    df = df.drop("is_guest_login", axis=1)
-    df = df.join(is_guest_login_one_hot)
+    # protocol_type_one_hot = pd.get_dummies(df["protocol_type"], prefix="protocol_type")
+    # df = df.drop("protocol_type", axis=1)
+    # df = df.join(protocol_type_one_hot)
+    #
+    # service_one_hot = pd.get_dummies(df["service"], prefix="service")
+    # df = df.drop("service", axis=1)
+    # df = df.join(service_one_hot)
+    #
+    # flag_one_hot = pd.get_dummies(df["flag"], prefix="flag")
+    # df = df.drop("flag", axis=1)
+    # df = df.join(flag_one_hot)
+    #
+    # land_one_hot = pd.get_dummies(df["land"], prefix="land")
+    # df = df.drop("land", axis=1)
+    # df = df.join(land_one_hot)
+    #
+    # logged_in_one_hot = pd.get_dummies(df["logged_in"], prefix="logged_in")
+    # df = df.drop("logged_in", axis=1)
+    # df = df.join(logged_in_one_hot)
+    #
+    # root_shell_one_hot = pd.get_dummies(df["root_shell"], prefix="root_shell")
+    # df = df.drop("root_shell", axis=1)
+    # df = df.join(root_shell_one_hot)
+    #
+    # su_attempted_one_hot = pd.get_dummies(df["su_attempted"], prefix="su_attempted")
+    # df = df.drop("su_attempted", axis=1)
+    # df = df.join(su_attempted_one_hot)
+    #
+    # is_host_login_one_hot = pd.get_dummies(df["is_host_login"], prefix="is_host_login")
+    # df = df.drop("is_host_login", axis=1)
+    # df = df.join(is_host_login_one_hot)
+    #
+    # is_guest_login_one_hot = pd.get_dummies(df["is_guest_login"], prefix="is_guest_login")
+    # df = df.drop("is_guest_login", axis=1)
+    # df = df.join(is_guest_login_one_hot)
 
     label_one_hot = pd.get_dummies(df["label"], prefix="label")
     df = df.drop("label", axis=1)
@@ -78,7 +78,8 @@ def MinMax(train,test):
 
     train[columns_to_normalize] = (train[columns_to_normalize] - min_values) / (max_values - min_values)
     test[columns_to_normalize] = (test[columns_to_normalize] - min_values) / (max_values - min_values)
-
+    train.fillna(0, inplace=True)
+    test.fillna(0, inplace=True)
     train.to_csv('D:/IDdataset/processedNSL/train(MinMax).csv',header=True,index=False)
     test.to_csv('D:/IDdataset/processedNSL/test(MinMax).csv', header=True, index=False)
 
@@ -88,22 +89,27 @@ if __name__ == '__main__':
     # df_test = pd.read_table(test_filepath,delimiter=',',names=column_list)
     # df_concat = pd.concat([df_train,df_test])
     #
-    # Dos_list = ['apache2','back','land','mailbomb','neptune','pod','processtable','smurf','teardrop','udpstorm','worm']
-    # Probe_list = ['ipsweep', 'mscan', 'nmap', 'portsweep', 'saint', 'satan']
-    # U2R_list = ['buffer_overflow', 'httptunnel', 'loadmodule', 'perl', 'ps', 'rootkit', 'sqlattack', 'xterm']
-    # R2L_list = ['ftp_write','guess_passwd','imap','multihop','named','phf','sendmail','snmpgetattack',
-    #             'snmpguess','spy','warezclient','warezmaster','worm','xlock','xsnoop']
+    no_novelty_label = pd.read_csv('D:/IDdataset/no_novelty_test_label_origin.csv',header=0)
+    # print(no_novelty_label.value_counts())
+    Dos_list = ['apache2','back','land','mailbomb','neptune','pod','processtable','smurf','teardrop','udpstorm','worm']
+    Probe_list = ['ipsweep', 'mscan', 'nmap', 'portsweep', 'saint', 'satan']
+    U2R_list = ['buffer_overflow', 'loadmodule', 'perl', 'ps', 'rootkit', 'sqlattack', 'xterm']
+    R2L_list = ['ftp_write','guess_passwd','httptunnel','imap','multihop','named','phf','sendmail','snmpgetattack',
+                'snmpguess','spy','warezclient','warezmaster','xlock','xsnoop']
 
-    # for sub in Dos_list:
-    #     df_concat['label'].replace(sub,'dos',inplace=True)
-    # for sub in Probe_list:
-    #     df_concat['label'].replace(sub,'probe',inplace=True)
-    # for sub in U2R_list:
-    #     df_concat['label'].replace(sub,'u2r',inplace=True)
-    # for sub in R2L_list:
-    #     df_concat['label'].replace(sub,'r2l', inplace=True)
+    for sub in Dos_list:
+        no_novelty_label['label'].replace(sub,'dos',inplace=True)
+    for sub in Probe_list:
+        no_novelty_label['label'].replace(sub,'probe',inplace=True)
+    for sub in U2R_list:
+        no_novelty_label['label'].replace(sub,'u2r',inplace=True)
+    for sub in R2L_list:
+        no_novelty_label['label'].replace(sub,'r2l', inplace=True)
+    # no_novelty_label_oh = one_hot(no_novelty_label)
+    # no_novelty_label_oh.reindex(columns=['label_normal','label_dos','label_probe','label_u2r','label_r2l'])
+    no_novelty_label.to_csv('D:/IDdataset/no_novelty_test_label_5class.csv',index=False)
     # print(df_concat)
-    # df_concat.to_csv(destination_filepath,index=False)
+    # df_concat.to_csv('D:/IDdataset/no_novelty_test_label.csv',index=False)
 
     # df_concat1 = pd.read_csv(destination_filepath,header=0)
     # # print(df_concat1)
@@ -145,16 +151,17 @@ if __name__ == '__main__':
     # ])
     # data_in_order.fillna(0, inplace=True)
     # data_in_order.to_csv('D:/IDdataset/processedNSL/concat_onehot_ordered.csv', header=True,index=False)
-    df_train = pd.read_csv(train_filepath,header=0)
-    train = df_train.iloc[:,0:129]
-    # train = train.values
-
-    df_test = pd.read_csv(test_filepath, header=0)
-    test = df_test.iloc[:, 0:129]
-    # test = test.values
-    # print(train.shape)
-    # print(test.shape)
-    # MinMax(train,test)
-    MinMax(train=train,test=test)
+    #
+    # df_train = pd.read_csv('D:/IDdataset/processedNSL/train(onehot).csv',header=0)
+    # train = df_train.iloc[:,0:129]
+    # # train = train.values
+    #
+    # df_test = pd.read_csv('D:/IDdataset/processedNSL/test(onehot).csv', header=0)
+    # test = df_test.iloc[:, 0:129]
+    # # test = test.values
+    # # print(train.shape)
+    # # print(test.shape)
+    # # MinMax(train,test)
+    # MinMax(train=train,test=test)
 
 
