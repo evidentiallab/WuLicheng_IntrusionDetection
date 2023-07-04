@@ -79,7 +79,7 @@ def probabilistic_FitNet4(data_WIDTH, data_HEIGHT, num_class,
                                           save_weights_only=True,save_frequency=1)
 
     if is_train == 1:
-        h = model_PR.fit(x_train, y_train, batch_size=32, epochs=40,
+        h = model_PR.fit(x_train, y_train, batch_size=32, epochs=60,
                  verbose=1, callbacks=[checkpoint_callback], validation_data=(x_test, y_test), shuffle=True)
 
         history = h.history
@@ -268,7 +268,7 @@ def evidential_FitNet4(data_WIDTH, data_HEIGHT, num_class, prototypes,nu,model_f
         optimizer=keras.optimizers.Nadam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, schedule_decay=0.004),
         loss='CategoricalCrossentropy',
         metrics=['accuracy'])
-    # model_evi.summary()
+    model_evi.summary()
 
     if load_weights == 1:
         # load the weights of probabilistic classifier
@@ -294,7 +294,7 @@ def evidential_FitNet4(data_WIDTH, data_HEIGHT, num_class, prototypes,nu,model_f
             # 0.001
             loss='CategoricalCrossentropy',
             metrics=['accuracy'])
-        # model_mid.summary()
+        model_mid.summary()
         mid_callback = ModelCheckpoint(mid_filepath, monitor='val_accuracy', verbose=1, save_best_only=True,
                                        save_weights_only=True, save_frequency=1)
         h = model_mid.fit(train_feature_for_DS, y_train, batch_size=64, epochs=10, verbose=1,
@@ -325,13 +325,13 @@ def evidential_FitNet4(data_WIDTH, data_HEIGHT, num_class, prototypes,nu,model_f
             save_best_only=True, save_weights_only=True,
             save_frequency=1)
         model_evi.fit(x_train,y_train,
-                      batch_size=64, epochs=10, verbose=1,
+                      batch_size=64, epochs=8, verbose=1,
                       callbacks=[checkpoint_callback], validation_data=(x_test, y_test), shuffle=True)
 
     if is_load == 1:
         model_evi.load_weights(evi_filepath).expect_partial()
-        model_evi.evaluate(x_train, y_train, batch_size=64, verbose=1)
-        model_evi.evaluate(x_test, y_test, batch_size=64, verbose=1)
+        # model_evi.evaluate(x_train, y_train, batch_size=64, verbose=1)
+        # model_evi.evaluate(x_test, y_test, batch_size=64, verbose=1)
         if output_confusion_matrix == 1:
             y_pred = model_evi.predict(x_test)
             y_pred = y_pred.argmax(axis=1)
@@ -341,12 +341,14 @@ def evidential_FitNet4(data_WIDTH, data_HEIGHT, num_class, prototypes,nu,model_f
             acc = accuracy_score(y_true=y_test, y_pred=y_pred)
             recall = recall_score(y_true=y_test, y_pred=y_pred, labels=None, average='macro')
             preccision = precision_score(y_true=y_test, y_pred=y_pred, labels=None, average='macro')
-            print(confusion_mtx)
-            print(np.round(confusion_matrix(y_test, y_pred,normalize='true'),3))
+            # print(confusion_mtx)
+            # print(np.round(confusion_matrix(y_test, y_pred,normalize='true'),3))
+            print('proto: ' + str(prototypes) + 'nu: ' + str(nu))
             print('accuracy: ' + str(acc))
             print('recall: ' + str(recall))
             print('precision: ' + str(preccision))
             print('F1-score: ' + str(f1))
+            return acc
 
 
 def evidential_FitNet4_simplify(data_WIDTH, data_HEIGHT, num_class, prototypes,is_load,nu,
@@ -469,7 +471,6 @@ def evidential_FitNet4_simplify(data_WIDTH, data_HEIGHT, num_class, prototypes,i
 
 
 if __name__ == '__main__':
-    # print('BYD')
     # smote_train_filepath = 'D:/IDdataset/processedNSL/SMOTE/NSL_train_smote.csv'
     # smote_train_label_filepath = 'D:/IDdataset/processedNSL/SMOTE/NSL_train_label_smote_onehot.csv'
     # model_for_smote_NSL = 'pickleJar/Probabilistic/PR_FitNet_simplified_SMOTE_NSL'
