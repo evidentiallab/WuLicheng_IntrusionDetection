@@ -165,14 +165,19 @@ if __name__ == '__main__':
     #                  filepath='pickleJarRNN/vanillaRNN/SSNSL_randomSplit_hiddenunits40', x_test=X_test, numerical_y_test=numerical_y_test)
     # ELSTM.Test_LSTM_SV(hidden_units=60, data_WIDTH=40, num_class=5, number_act_set=31, nu=0.5,
     #                  filepath='pickleJarRNN/LSTM/bilayerLSTM/SSNSL_randomSplit_hiddenunits60', x_test=X_test, numerical_y_test=numerical_y_test)
-    ECNN.ECNN(data_WIDTH=40, num_class=5, prototypes=40, nu=0.5,
-            model_filepath='pickleJarNSL/biCNN(2FC)_SSNSL_random',
-            evi_filepath='pickleJarNSL/ECNN/mid/SSNSL(2FC)_random_proto40_nu0.5',
-            mid_filepath='pickleJarNSL/ECNN/SSNSL(2FC)_random_proto40_nu0.5',
-            flatten_size=64, load_and_train=1, is_load=0,
-            x_train=X_train, y_train=y_train, x_test=X_test, y_test=y_test, output_confusion_matrix=1)
-
-
+    # ECNN.ECNN(data_WIDTH=40, num_class=5, prototypes=30, nu=0.6,
+    #         model_filepath='pickleJarNSL/biCNN(2FC)_SSNSL_random',
+    #         evi_filepath='pickleJarNSL/ECNN/mid/SSNSL(2FC)_random_proto30_nu0.6',
+    #         mid_filepath='pickleJarNSL/ECNN/SSNSL(2FC)_random_proto30_nu0.6',
+    #         flatten_size=64, load_and_train=0, is_load=1,
+    #         x_train=X_train, y_train=y_train, x_test=X_test, y_test=y_test, output_confusion_matrix=1)
+    # for proto in [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 70, 80, 90]:
+    # for proto in [80]:
+    for nu in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6,  0.7, 0.8, 0.9, 1.0]:
+        ECNN.ERBFNN(data_WIDTH=40, num_class=5, prototypes=72, nu=nu, is_train=0, is_load=1,
+                    epochs=95, model_filepath='pickleJarNSL/ERBFNN/random_proto72_nu%s' % str(nu),
+                    x_train=X_train, y_train=y_train, x_test=X_test, y_test=y_test,
+                    output_confusion_matrix=1)
 
 
 

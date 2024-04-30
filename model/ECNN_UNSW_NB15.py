@@ -19,9 +19,11 @@ from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve, auc
 import tensorflow as tf
 from tensorflow import keras
+KL = keras.layers
+from tensorflow import optimizers
 from keras.utils import to_categorical
 from keras.callbacks import ModelCheckpoint
-from keras.layers import Dense, LSTM, MaxPool1D, Flatten, Dropout,Conv1D,BatchNormalization
+from keras.layers import Dense, LSTM, MaxPooling1D, Flatten, Dropout,Conv1D,BatchNormalization
 from keras.models import Sequential
 from keras.layers import Input
 from keras.models import Model
@@ -36,19 +38,62 @@ from scipy.optimize import minimize
 import math
 
 
-def CNN(data_WIDTH,num_class,is_train, is_load, model_filepath,x_train,
-                        y_train, x_test, y_test,output_confusion_matrix):
-    inputs = keras.layers.Input((data_WIDTH, 1))
-    c1 = keras.layers.Conv1D(32, 3, activation='relu', kernel_initializer='he_normal', padding='same')(inputs)
-    c2 = keras.layers.Conv1D(32, 3, activation='relu', kernel_initializer='he_normal', padding='same')(c1)
-    pool1 = keras.layers.MaxPooling1D(3)(c2)
-    bn1 = keras.layers.BatchNormalization()(pool1)
-    dr1 = keras.layers.Dropout(0.5)(bn1)
-    flatten1 = tf.keras.layers.Flatten()(dr1)
-    # fc1 = tf.keras.layers.Dense(64,activation='relu')(flatten1)
-    outputs = tf.keras.layers.Dense(num_class, activation='softmax')(flatten1)
+def ERBFNN(data_WIDTH, num_class, prototypes, nu, is_train, epochs, model_filepath, x_train,
+           y_train, x_test, y_test,output_confusion_matrix):
+    inputs = keras.layers.Input(shape=(data_WIDTH, ))
+    ED = ds_layer.DS1(prototypes, data_WIDTH)(inputs)
+    ED_ac = ds_layer.DS1_activate(prototypes)(ED)
+    mass_prototypes = ds_layer.DS2(prototypes, num_class)(ED_ac)
+    mass_prototypes_omega = ds_layer.DS2_omega(prototypes, num_class)(mass_prototypes)
+    mass_Dempster = ds_layer.DS3_Dempster(prototypes, num_class)(mass_prototypes_omega)
+    mass_Dempster_normalize = ds_layer.DS3_normalize()(mass_Dempster)
 
-    model_PR = tf.keras.Model(inputs=[inputs], outputs=[outputs])
+    outputs = utility_layer_train.DM(nu, num_class)(mass_Dempster_normalize)
+    model_ERBF = keras.Model(inputs=[inputs], outputs=[outputs])
+    model_ERBF.compile(optimizer=keras.optimizers.Nadam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, epsilon=None,
+                                                        schedule_decay=0.004),loss='CategoricalCrossentropy',metrics=['accuracy'])
+    # model_ERBF.summary()
+    if is_train:
+        checkpoint_callback = ModelCheckpoint(model_filepath, monitor='val_accuracy', verbose=1,
+                                              save_best_only=True, save_weights_only=True,save_frequency=1)
+        model_ERBF.fit(x_train, y_train, batch_size=32, epochs=epochs, verbose=1,
+                       callbacks=[checkpoint_callback], validation_data=(x_test, y_test), shuffle=True)
+
+    else:
+        model_ERBF.load_weights(model_filepath).expect_partial()
+        # model_evi.evaluate(x_train, y_train, batch_size=64, verbose=1)
+        # model_evi.evaluate(x_test, y_test, batch_size=64, verbose=1)
+        if output_confusion_matrix == 1:
+            y_pred = model_ERBF.predict(x_test)
+            y_pred = y_pred.argmax(axis=1)
+            y_test = y_test.argmax(axis=1)
+            confusion_mtx = confusion_matrix(y_test, y_pred)
+            f1 = f1_score(y_true=y_test, y_pred=y_pred, labels=None, average='macro')
+            acc = accuracy_score(y_true=y_test, y_pred=y_pred)
+            recall = recall_score(y_true=y_test, y_pred=y_pred, labels=None, average='macro')
+            precision = precision_score(y_true=y_test, y_pred=y_pred, labels=None, average='macro')
+            # print(confusion_mtx)
+            # print(np.round(confusion_matrix(y_test, y_pred,normalize='true'),3))
+            print('proto: ' + str(prototypes) + 'nu: ' + str(nu))
+            print('accuracy: ' + str(acc))
+            print('recall: ' + str(recall))
+            print('precision: ' + str(precision))
+            print('F1-score: ' + str(f1))
+            return acc, recall, precision, f1
+
+
+def CNN(data_WIDTH,num_class,is_train, model_filepath,x_train,
+        y_train, x_test, y_test,output_confusion_matrix):
+    inputs = Input((data_WIDTH, 1))
+    c1 = Conv1D(32, 3, activation='relu', kernel_initializer='he_normal', padding='same')(inputs)
+    c2 = Conv1D(32, 3, activation='relu', kernel_initializer='he_normal', padding='same')(c1)
+    pool1 = MaxPooling1D(3)(c2)
+    flatten1 = Flatten()(pool1)
+    bn1 = BatchNormalization()(flatten1)
+    fc1 = Dense(64,activation='relu')(bn1)
+    outputs = Dense(num_class, activation='softmax')(fc1)
+
+    model_PR = Model(inputs=[inputs], outputs=[outputs])
     model_PR.compile(optimizer=keras.optimizers.Nadam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, epsilon=None,
                                                       schedule_decay=0.004), loss='CategoricalCrossentropy',metrics=['accuracy'])
     # model_PR.summary()
@@ -56,8 +101,8 @@ def CNN(data_WIDTH,num_class,is_train, is_load, model_filepath,x_train,
     checkpoint_callback = ModelCheckpoint(model_filepath, monitor='val_accuracy', verbose=1, save_best_only=True,
                                           save_weights_only=True, save_frequency=1)
 
-    if is_train == 1:
-        h = model_PR.fit(x_train, y_train, batch_size=32, epochs=240,
+    if is_train:
+        h = model_PR.fit(x_train, y_train, batch_size=32, epochs=90,
                          verbose=1, callbacks=[checkpoint_callback], validation_data=(x_test, y_test), shuffle=True)
 
         history = h.history
@@ -84,7 +129,7 @@ def CNN(data_WIDTH,num_class,is_train, is_load, model_filepath,x_train,
         # # plt.show()
         # plt.close()
 
-    if is_load == 1:
+    else:
         model_PR.load_weights(model_filepath).expect_partial()
         # model_PR.load_weights(filepath1)
         # model_PR.evaluate(x_train, y_train, batch_size=25, verbose=1)
@@ -103,12 +148,13 @@ def CNN(data_WIDTH,num_class,is_train, is_load, model_filepath,x_train,
             f1 = f1_score(y_true=y_test, y_pred=y_pred, labels=None, average='macro')
             acc = accuracy_score(y_true=y_test, y_pred=y_pred)
             recall = recall_score(y_true=y_test, y_pred=y_pred, labels=None, average='macro')
-            preccision = precision_score(y_true=y_test, y_pred=y_pred, labels=None, average='macro')
+            precision = precision_score(y_true=y_test, y_pred=y_pred, labels=None, average='macro')
             # print(confusion_mtx)
             print('accuracy: ' + str(acc))
             print('recall: ' + str(recall))
-            print('precision: ' + str(preccision))
+            print('precision: ' + str(precision))
             print('F1-score: ' + str(f1))
+            return acc, recall, precision, f1
 
 
 def ECNN(data_WIDTH, num_class, prototypes,nu,model_filepath,evi_filepath,mid_filepath,
@@ -209,18 +255,74 @@ def ECNN(data_WIDTH, num_class, prototypes,nu,model_filepath,evi_filepath,mid_fi
             return acc
 
 
+def ECNN_direct_training(data_WIDTH, num_class, prototypes,nu,evi_filepath,flatten_size,epochs,
+                         is_train, x_train, y_train, x_test, y_test, output_confusion_matrix):
+    inputs = keras.layers.Input((data_WIDTH, 1))
+    c1 = Conv1D(32, 3, activation='relu', kernel_initializer='he_normal', padding='same')(inputs)
+    c2 = Conv1D(32, 3, activation='relu', kernel_initializer='he_normal', padding='same')(c1)
+    pool1 = keras.layers.MaxPooling1D(3)(c2)
+
+    # dr1 = keras.layers.Dropout(0.2)(bn1)
+    flatten1 = tf.keras.layers.Flatten()(pool1)
+    bn1 = keras.layers.BatchNormalization()(flatten1)
+    fc1 = tf.keras.layers.Dense(64, activation='relu')(bn1)
+
+    # DS layer
+    ED = ds_layer.DS1(prototypes, flatten_size)(fc1)
+    ED_ac = ds_layer.DS1_activate(prototypes)(ED)
+    mass_prototypes = ds_layer.DS2(prototypes, num_class)(ED_ac)
+    mass_prototypes_omega = ds_layer.DS2_omega(prototypes, num_class)(mass_prototypes)
+    mass_Dempster = ds_layer.DS3_Dempster(prototypes, num_class)(mass_prototypes_omega)
+    mass_Dempster_normalize = ds_layer.DS3_normalize()(mass_Dempster)
+
+    # Utility layer for training
+    outputs = utility_layer_train.DM(nu, num_class)(mass_Dempster_normalize)
+    model_evi = keras.Model(inputs=[inputs], outputs=[outputs])
+    model_evi.compile(
+        optimizer=optimizers.Nadam(learning_rate=0.001, beta_1=0.9, beta_2=0.999, epsilon=None,
+                                         schedule_decay=0.004),loss='CategoricalCrossentropy',metrics=['accuracy'])
+    # model_evi.summary()
+    checkpoint_callback = ModelCheckpoint(evi_filepath, monitor='val_accuracy', verbose=1,
+                                          save_best_only=True, save_weights_only=True,save_frequency=1)
+    if is_train:
+        model_evi.fit(x_train, y_train,batch_size=32, epochs=epochs, verbose=1,
+                      callbacks=[checkpoint_callback], validation_data=(x_test, y_test), shuffle=True)
+
+    else:
+        model_evi.load_weights(evi_filepath).expect_partial()
+        # model_evi.evaluate(x_train, y_train, batch_size=64, verbose=1)
+        # model_evi.evaluate(x_test, y_test, batch_size=64, verbose=1)
+        if output_confusion_matrix == 1:
+            y_pred = model_evi.predict(x_test)
+            y_pred = y_pred.argmax(axis=1)
+            y_test = y_test.argmax(axis=1)
+            confusion_mtx = confusion_matrix(y_test, y_pred)
+            f1 = f1_score(y_true=y_test, y_pred=y_pred, labels=None, average='macro')
+            acc = accuracy_score(y_true=y_test, y_pred=y_pred)
+            recall = recall_score(y_true=y_test, y_pred=y_pred, labels=None, average='macro')
+            precision = precision_score(y_true=y_test, y_pred=y_pred, labels=None, average='macro')
+            # print(confusion_mtx)
+            # print(np.round(confusion_matrix(y_test, y_pred,normalize='true'),3))
+            print('proto: ' + str(prototypes) + 'nu: ' + str(nu))
+            print('accuracy: ' + str(acc))
+            print('recall: ' + str(recall))
+            print('precision: ' + str(precision))
+            print('F1-score: ' + str(f1))
+            return acc, recall, precision, f1
+
+
 def ECNN_SV(data_WIDTH,num_class, number_act_set, act_set, nu, tol,prototypes,
                   utility_matrix, is_load, filepath,x_test, numerical_y_test):
     inputs = keras.layers.Input((data_WIDTH, 1))
     c1 = keras.layers.Conv1D(32, 3, activation='relu', kernel_initializer='he_normal', padding='same')(inputs)
     c2 = keras.layers.Conv1D(32, 3, activation='relu', kernel_initializer='he_normal', padding='same')(c1)
     pool1 = keras.layers.MaxPooling1D(3)(c2)
-    bn1 = keras.layers.BatchNormalization()(pool1)
-    dr1 = keras.layers.Dropout(0)(bn1)
-    flatten1 = tf.keras.layers.Flatten()(dr1)
-    # fc1 = tf.keras.layers.Dense(64, activation='relu')(flatten1)
+    # dr1 = keras.layers.Dropout(0)(bn1)
+    flatten1 = tf.keras.layers.Flatten()(pool1)
+    bn1 = keras.layers.BatchNormalization()(flatten1)
+    fc1 = tf.keras.layers.Dense(64, activation='relu')(bn1)
     # DS layer
-    ED = ds_layer.DS1(prototypes, 512)(flatten1)
+    ED = ds_layer.DS1(prototypes, 64)(flatten1)
     ED_ac = ds_layer.DS1_activate(prototypes)(ED)
     mass_prototypes = ds_layer.DS2(prototypes, num_class)(ED_ac)
     mass_prototypes_omega = ds_layer.DS2_omega(prototypes, num_class)(mass_prototypes)

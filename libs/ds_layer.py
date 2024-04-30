@@ -1,7 +1,24 @@
 import tensorflow as tf
+from tensorflow import keras
+from keras import layers
+KL = keras.layers
 
 
-class DS1(tf.keras.layers.Layer):
+class DS1_kmeans(layers.Layer):
+    def __init__(self, units, input_dim):
+        super(DS1_kmeans, self).__init__()
+        self.w = self.add_weight(
+            name='Prototypes',
+            shape=(units, input_dim),
+            initializer='random_normal',
+            trainable=True
+        )
+
+    def call(self, inputs, *args, **kwargs):
+        pass
+
+
+class DS1(layers.Layer):
     def __init__(self, units, input_dim):
         super(DS1, self).__init__()
         self.w = self.add_weight(
@@ -10,27 +27,25 @@ class DS1(tf.keras.layers.Layer):
             initializer='random_normal',
             trainable=True
         )
-
         self.units = units
 
-    def call(self, inputs):
-
+    def call(self, inputs, *args, **kwargs):
         for i in range(self.units):
             if i == 0:
                 un_mass_i = tf.subtract(self.w[i, :], inputs, name=None)
                 un_mass_i = tf.square(un_mass_i, name=None)
                 un_mass_i = tf.reduce_sum(un_mass_i, -1, keepdims=True)
                 un_mass = un_mass_i
-
             if i >= 1:
                 un_mass_i = tf.subtract(self.w[i, :], inputs, name=None)
                 un_mass_i = tf.square(un_mass_i, name=None)
                 un_mass_i = tf.reduce_sum(un_mass_i, -1, keepdims=True)
                 un_mass = tf.concat([un_mass, un_mass_i], -1)
+        # print("DS1 is called")
         return un_mass
 
 
-class DS1_activate(tf.keras.layers.Layer):
+class DS1_activate(keras.layers.Layer):
     def __init__(self, input_dim):
         super(DS1_activate, self).__init__()
         self.xi = self.add_weight(
@@ -46,7 +61,6 @@ class DS1_activate(tf.keras.layers.Layer):
             initializer='random_normal',
             trainable=True
         )
-
         self.input_dim = input_dim
 
     def call(self, inputs):
@@ -59,6 +73,7 @@ class DS1_activate(tf.keras.layers.Layer):
         si = tf.exp(si, name=None)
         si = tf.multiply(si, alpha, name=None)
         si = si / (tf.reduce_max(si, axis=-1, keepdims=True) + 0.0001)
+        # print("DS1_activate is called")
         return si
 
 
@@ -88,6 +103,7 @@ class DS2(tf.keras.layers.Layer):
                 mass_prototype_i = tf.expand_dims(tf.multiply(u[i, :], inputs_new[:, i], name=None), -2)
                 mass_prototype = tf.concat([mass_prototype, mass_prototype_i], -2)
         mass_prototype = tf.convert_to_tensor(mass_prototype)
+        # print("DS2 is called")
         return mass_prototype
 
 
@@ -102,6 +118,7 @@ class DS2_omega(tf.keras.layers.Layer):
         mass_omega_sum = tf.subtract(1., mass_omega_sum[:, :, 0], name=None)
         mass_omega_sum = tf.expand_dims(mass_omega_sum, -1)
         mass_with_omega = tf.concat([inputs, mass_omega_sum], -1)
+        # print("DS1_omega is called")
         return mass_with_omega
 
 
@@ -128,6 +145,7 @@ class DS3_Dempster(tf.keras.layers.Layer):
             # m1=combine2_3[:,:-1]
             # omega1=omega1*omega2
             # m1=tf.concat([m1, omega1], -1)
+        # print("DS3_Dempster is called")
         return m1
 
 
@@ -137,4 +155,6 @@ class DS3_normalize(tf.keras.layers.Layer):
 
     def call(self, inputs):
         mass_combine_normalize = inputs / tf.reduce_sum(inputs, axis=-1, keepdims=True)
+        # print("DS3_normalize is called")
+        # print(type(mass_combine_normalize))
         return mass_combine_normalize

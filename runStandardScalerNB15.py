@@ -159,11 +159,13 @@ if __name__ == '__main__':
     # print("p-value: " + str(p))
 
     """"" ================================== random split ==================================  """
-    X_train, X_test, y_train, y_test, numerical_y_test = load_dataset("random", is_reshape=True)
-
+    X_train, X_test, y_train, y_test, numerical_y_test = load_dataset("random", is_reshape=False)
+    # ECNN.CNN(data_WIDTH=50, num_class=10, is_train=0, is_load=1,
+    #          model_filepath='pickleJarNB15/biCNN_SSNB15_random',
+    #          x_train=X_train,y_train=y_train, x_test=X_test, y_test=y_test, output_confusion_matrix=1)
     # ECNN.Test_CNN_SV(data_WIDTH=50,num_class=10, number_act_set=1023, nu=0.5,
     #                 filepath='pickleJarNB15/biCNN_SSNB15_random', x_test=X_test, numerical_y_test=numerical_y_test)
     # ERNN.Test_RNN_SV(hidden_units=100, data_WIDTH=50, num_class=10, number_act_set=1023, nu=0.5,
     #                  filepath='pickleJarNB15/RNN_SSNB15_random_hiddenunits100', x_test=X_test, numerical_y_test=numerical_y_test)
-    ELSTM.Test_LSTM_SV(hidden_units=100, data_WIDTH=50, num_class=10, number_act_set=1023, nu=0.5,
-                     filepath='pickleJarNB15/LSTM_SSNB15_random_hiddenunits100', x_test=X_test, numerical_y_test=numerical_y_test)
+    # ELSTM.Test_LSTM_SV(hidden_units=100, data_WIDTH=50, num_class=10, number_act_set=1023, nu=0.5,
+    #                  filepath='pickleJarNB15/LSTM_SSNB15_random_hiddenunits100', x_test=X_test, numerical_y_test=numerical_y_test)
