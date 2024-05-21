@@ -25,4 +25,5 @@ class DM(tf.keras.layers.Layer):
         upper = tf.expand_dims((1 - self.nu) * inputs[:, -1], -1)  # here 0.1 = 1 - \nu
         upper = tf.tile(upper, [1, self.num_class + 1])
         outputs = tf.add(inputs, upper, name=None)[:, 0:-1]
+        # print("DS3_normalize is called")
         return outputs

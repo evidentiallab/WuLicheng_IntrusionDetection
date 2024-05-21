@@ -1,2 +1,0 @@
-model_checkpoint_path: "PR_FitNet_lr0.01_bs64"
-all_model_checkpoint_paths: "PR_FitNet_lr0.01_bs64"

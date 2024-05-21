@@ -112,7 +112,6 @@ def set_valued_evidential_FitNet4(num_class, number_act_set, act_set, nu, tol,
     data_HEIGHT = 10
     inputs_pixels = data_WIDTH * data_HEIGHT
     inputs = tf.keras.layers.Input((data_HEIGHT, data_WIDTH, 1))
-    # filepath = 'pickleJar/Evidential/EVI_FitNet_0.001and64_500proto'
 
     c1_1 = tf.keras.layers.Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(inputs)
     c1_2 = tf.keras.layers.Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c1_1)
